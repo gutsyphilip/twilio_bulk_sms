@@ -1,22 +1,24 @@
-import atexit
+from flask import Flask, request
+from flask_cors import CORS
 
-from flask import Flask
+from utils.request import validate_body
+from utils.response import response, error_response
+from utils.sms import send_bulk_sms
 
-from controllers.audience import audience
-from controllers.templates import templates
-from jobs import start_sms_job, close_workers
+app = Flask(__name__)
 
-
-def create_app():
-    workers = start_sms_job()
-    atexit.register(close_workers, workers)
-    return Flask(__name__)
+CORS(app)
 
 
-app = create_app()
+@app.route('/message', methods=['POST'])
+def message_audience():
+    body = request.get_json()
+    status, missing_field = validate_body(body, ['message', 'phones'])
+    if not status:
+        return error_response(f'{missing_field} is missing')
+    send_bulk_sms(body['phones'], body['message'])
+    return response(True, 'Success', None)
 
-app.register_blueprint(audience, url_prefix='/audience')
-app.register_blueprint(templates, url_prefix='/templates')
 
 if __name__ == '__main__':
     app.run()
