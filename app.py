@@ -1,6 +1,9 @@
 from flask import Flask, request
 from flask_cors import CORS
 
+from dotenv import load_dotenv
+load_dotenv()
+
 from utils.request import validate_body
 from utils.response import response, error_response
 from utils.sms import send_bulk_sms
